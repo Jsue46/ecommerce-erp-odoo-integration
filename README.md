@@ -1,135 +1,92 @@
-# SEMI1_G12 - E-Commerce Integrado con ERP (Odoo), CRM y BI
+# E-Commerce Platform with Odoo ERP/CRM Integration
 
-Proyecto de Transformación Digital para el curso de **Sistemas Organizacionales y Gerenciales 1 (Segundo Semestre 2026)** — Universidad de San Carlos de Guatemala.
+Academic project developed for the **Organizational and Management Systems 1** course at the Universidad de San Carlos de Guatemala (Second Semester 2026).
 
----
-
-## Alcance de la Fase 3: E-Commerce e Integración
-
-Este repositorio contiene el sitio E-Commerce y la capa de integración con Odoo ERP/CRM:
-
-1. **Catálogo y carrito (Integrante 1):** catálogo sincronizado de más de 30 productos, búsqueda, filtros, cantidades, eliminación, total y persistencia local.
-2. **Registro y cotizaciones (Integrante 1):** alta de clientes, cotizaciones en borrador y conversión explícita a orden de venta.
-3. **Pago educativo:** tarjetas tokenizadas (sin guardar PAN ni CVV), pagos simulados sin límite de saldo y recibos consultables.
-4. **Manual de usuario (Integrante 1):** recorrido ilustrado con capturas de las pantallas principales.
-5. **Middleware API REST (FastAPI):** Servicio backend que recibe las solicitudes del sitio y las procesa en Odoo.
-6. **Sincronización Bidireccional en Tiempo Real:**
-   * **CRM (`crm.lead`):** Registra cada intento y venta como oportunidad ganada con su monto esperado.
-   * **ERP Ventas (`sale.order`):** Genera la orden de venta confirmada.
-   * **Inventario (`stock.picking`):** Descuenta el stock y genera la orden de despacho en almacén automáticamente.
-7. **Inventario protegido:** cada compra revalida existencias y completa el despacho; una cotización no reserva ni descuenta stock.
-8. **Facturación Funcional:** Al comprar, Odoo confirma la venta y publica la factura de cliente (`account.move`).
-9. **Portal de Cliente:** Vista para consultar cotizaciones, pedidos, facturas y pagos simulados por correo.
-10. **Pruebas:** Contrato API aislado en `tests/test_api.py`, pruebas del servicio educativo de pagos y prueba integral en `tests/test_flow.py`.
+This repository implements a full e-commerce platform integrated in real time with an Odoo 14 ERP/CRM instance hosted on Microsoft Azure. The project was developed collaboratively as a group assignment.
 
 ---
 
-## Arquitectura del Sistema
+## Overview
+
+The system consists of a React + TypeScript storefront connected through a FastAPI middleware layer to Odoo via XML-RPC. Every purchase triggers automated workflows across CRM leads, sales orders, inventory dispatching, and electronic invoicing — all without manual intervention.
+
+---
+
+## Key Features
+
+- Product catalog with search, filters, and persistent cart
+- Customer registration and quotation management
+- Simulated payment processing with tokenized cards
+- Bidirectional real-time synchronization with Odoo:
+  - CRM (`crm.lead`): records each purchase attempt as a won opportunity
+  - ERP Sales (`sale.order`): confirms the sales order automatically
+  - Inventory (`stock.picking`): decrements stock and generates dispatch orders
+  - Accounting (`account.move`): publishes the customer invoice on purchase
+- Customer portal for reviewing orders, quotes, invoices, and payments
+- Automated test suite covering API contracts and end-to-end flow
+
+---
+
+## Architecture
 
 ```
-[ Cliente / Tienda Web ]
-          │  (JSON HTTP / REST)
-          ▼
-   [ Middleware FastAPI (Puerto 8000) ]
-          │  (Protocolo XML-RPC)
-          ▼
-   [ Servidor Azure: Odoo 14 + PostgreSQL 13 (Puerto 8069) ]
-      ├── res.partner (Clientes)
-      ├── crm.lead (Oportunidades de CRM)
-      ├── sale.order (Órdenes de Venta ERP)
-      ├── stock.picking (Reserva y Despacho de Stock)
-      └── account.move (Facturación Electrónica Contable)
+[ Web Storefront (React + TypeScript) ]
+            |  REST / JSON
+            v
+   [ FastAPI Middleware (port 8000) ]
+            |  XML-RPC
+            v
+   [ Odoo 14 + PostgreSQL 13 on Azure (port 8069) ]
+      ├── res.partner      (Customers)
+      ├── crm.lead         (CRM Opportunities)
+      ├── sale.order       (Sales Orders)
+      ├── stock.picking    (Inventory Dispatch)
+      └── account.move     (Electronic Invoices)
 ```
 
 ---
 
-## Enlaces en Producción (Nube de Azure)
+## Technologies
 
-* **Servidor Odoo ERP/CRM:** [http://gamerzone-odoo.northcentralus.cloudapp.azure.com:8069](http://gamerzone-odoo.northcentralus.cloudapp.azure.com:8069)
-* **Base de Datos:** `gamerzone_db`
-* **Swagger API Docs (Local):** `http://localhost:8000/docs`
-* **Tienda Web y Portal (Local):** `http://localhost:8000/store/`
+- **Frontend:** TypeScript, React, Vite, Zustand
+- **Backend:** Python, FastAPI, XML-RPC
+- **ERP/CRM:** Odoo 14
+- **Database:** PostgreSQL 13
+- **Cloud:** Microsoft Azure
+- **Testing:** Python unittest
 
 ---
 
-## Estructura del Repositorio
+## Repository Structure
 
-```text
-SEMI1_G12/
+```
+ecommerce-erp-odoo-integration/
 ├── backend/
-│   ├── config.py              # Credenciales y endpoints de Odoo en Azure
-│   ├── odoo_client.py         # Cliente XML-RPC para modelos de ERP, CRM, Stock y Facturación
-│   ├── main.py                # Servidor FastAPI con endpoints REST y CORS
-│   └── requirements.txt       # Dependencias de Python
+│   ├── config.py          # Odoo connection settings
+│   ├── odoo_client.py     # XML-RPC client for ERP/CRM/Stock/Invoicing
+│   ├── main.py            # FastAPI server with REST endpoints
+│   └── requirements.txt
 ├── frontend/
-│   ├── src/                   # Aplicación React + TypeScript
-│   │   ├── components/        # Navegación, productos, formularios y carrito
-│   │   ├── pages/             # Catálogo, cuenta, cotización y portal
-│   │   ├── lib/api.ts         # Cliente tipado de la API FastAPI
-│   │   └── store/             # Estado persistente con Zustand
-│   ├── public/                # Recursos estáticos
-│   ├── package.json           # Dependencias y comandos del frontend
-│   └── vite.config.ts         # Build Vite bajo /store/
+│   └── src/
+│       ├── components/    # Navigation, products, forms, cart
+│       ├── pages/         # Catalog, account, quotation, portal
+│       ├── lib/api.ts     # Typed API client
+│       └── store/         # Persistent state (Zustand)
 ├── tests/
-│   ├── test_api.py            # Pruebas aisladas de los endpoints web
-│   └── test_flow.py           # Script de prueba integral paso a paso
-├── docs/
-│   ├── manual_tecnico_integracion.md  # Manual técnico oficial
-│   ├── manual_usuario_ecommerce.md    # Manual del sitio con capturas
-│   └── capturas/                      # Evidencia visual del flujo
-└── README.md
+│   ├── test_api.py        # Isolated API contract tests
+│   └── test_flow.py       # End-to-end integration test
+└── docs/
+    ├── manual_tecnico_integracion.md
+    └── manual_usuario_ecommerce.md
 ```
 
 ---
 
-## Guía de Instalación y Ejecución
+## Academic Context
 
-### 1. Clonar el Repositorio
-```bash
-git clone https://github.com/Jsue46/SEMI1_G12.git
-cd SEMI1_G12
-```
-
-### 2. Instalar dependencias del backend
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r backend/requirements.txt
-cp .env.example .env
-```
-
-Edite `.env` y coloque las credenciales del usuario de integración de Odoo. Nunca guarde credenciales reales en Git.
-
-### 3. Compilar el frontend
-```bash
-cd frontend
-npm install
-npm run build
-cd ..
-```
-
-Para desarrollo con recarga automática puede ejecutar `npm run dev` dentro de `frontend`; Vite redirige `/api` al puerto 8000.
-
-### 4. Iniciar el Middleware
-```bash
-cd backend
-python main.py
-```
-El servicio estará disponible en `http://localhost:8000` y la tienda en `http://localhost:8000/store/`.
-
-### 5. Ejecutar las pruebas del sitio
-En otra terminal:
-```bash
-source .venv/bin/activate
-python -m unittest tests.test_api -v
-```
-
-La prueba integral `tests/test_flow.py` crea registros reales en Odoo. Ejecútela solo cuando necesite validar el flujo completo de integración.
-
----
-
-## Documentación
-
-Para ver la especificación completa de los endpoints, mapeo detallado de campos con la base de datos de Odoo y evidencias de ejecución, consultar el documento oficial:
-* [Manual Técnico de Integración](docs/manual_tecnico_integracion.md)
-* [Manual de Usuario del E-Commerce](docs/manual_usuario_ecommerce.md)
+| Field       | Detail                                              |
+|-------------|-----------------------------------------------------|
+| Course      | Organizational and Management Systems 1 (GEREN1)   |
+| Institution | Universidad de San Carlos de Guatemala              |
+| Semester    | Second Semester 2026                                |
+| Type        | Group project                                       |
